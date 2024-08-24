@@ -2,6 +2,21 @@ import os
 import argparse
 import shutil
 
+def check_directory_structure(imagenet_dir):
+    val_dir = os.path.join(imagenet_dir, 'val')
+    print(f"Checking directory: {val_dir}")
+    if os.path.exists(val_dir):
+        print("Directory exists")
+        files = os.listdir(val_dir)
+        print(f"Number of files in directory: {len(files)}")
+        if files:
+            print(f"Sample file names: {files[:5]}")
+    else:
+        print("Directory does not exist")
+
+print(f"IMAGENET_DIR: {os.environ.get('IMAGENET_DIR')}")
+print(f"SAVE_DIR: {os.environ.get('SAVE_DIR')}")
+print(f"MODE: {os.environ.get('MODE')}")
 
 def make(mode, imagenet_dir, save_dir):
     assert mode in ['50', '300', '919']
@@ -22,17 +37,42 @@ def make(mode, imagenet_dir, save_dir):
     with open(test_mapping, 'r') as f:
         test_mapping = f.read().splitlines()
 
+    # for cate in categories:
+    #     os.makedirs(os.path.join(validation_save_dir, cate))
+    #     os.makedirs(os.path.join(test_save_dir, cate))
     for cate in categories:
-        os.makedirs(os.path.join(validation_save_dir, cate))
-        os.makedirs(os.path.join(test_save_dir, cate))
+        validation_dir = os.path.join(validation_save_dir, cate)
+        test_dir = os.path.join(test_save_dir, cate)
+        if not os.path.exists(validation_dir):
+            os.makedirs(validation_dir)
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
 
     for item in validation_mapping:
         src, dst = item.split(' ')
-        shutil.copy(os.path.join(imagenet_dir, 'val', src), os.path.join(validation_save_dir, dst))
+        src_filename = os.path.basename(src)  # 只获取文件名，不包括路径
+        src_path = os.path.join(imagenet_dir, 'val', src_filename)
+        dst_path = os.path.join(validation_save_dir, dst)
+        print(f"Trying to copy from: {src_path}")
+        print(f"Copying to: {dst_path}")
+        if os.path.exists(src_path):
+            shutil.copy(src_path, dst_path)
+            # input()
+        else:
+            print(f"Source file not found: {src_path}")
 
+    # 对 test_mapping 做类似的修改
     for item in test_mapping:
         src, dst = item.split(' ')
-        shutil.copy(os.path.join(imagenet_dir, 'val', src), os.path.join(test_save_dir, dst))
+        src_filename = os.path.basename(src)  # 只获取文件名，不包括路径
+        src_path = os.path.join(imagenet_dir, 'val', src_filename)
+        dst_path = os.path.join(test_save_dir, dst)
+        print(f"Trying to copy from: {src_path}")
+        print(f"Copying to: {dst_path}")
+        if os.path.exists(src_path):
+            shutil.copy(src_path, dst_path)
+        else:
+            print(f"Source file not found: {src_path}")
 
 
 if __name__ == '__main__':
